@@ -1,7 +1,7 @@
 package zed
 
 type (
-	Validator struct {
+	Zed struct {
 		fields map[string]fieldTrait
 	}
 	OutValue struct {
@@ -10,26 +10,26 @@ type (
 	}
 )
 
-func New() *Validator {
-	return &Validator{
+func New() *Zed {
+	return &Zed{
 		fields: make(map[string]fieldTrait),
 	}
 }
 
-func (v *Validator) Field(name string, f fieldTrait) *Validator {
-	v.fields[name] = f
-	return v
+func (z *Zed) Field(name string, f fieldTrait) *Zed {
+	z.fields[name] = f
+	return z
 }
 
-func (v *Validator) Validate(m, out map[string]any) (e error) {
-	for name, field := range v.fields {
+func (z *Zed) Validate(m, out map[string]any) (e error) {
+	for name, field := range z.fields {
 		o, outOk := out[name]
 		if !outOk {
 			e = ErrOutFieldMissing
 			return
 		}
 		if e = field.validate(m[name], o); e != nil {
-			return e
+			return NewError(e, name)
 		}
 	}
 	return

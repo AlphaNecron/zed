@@ -3,6 +3,7 @@
 package zed
 
 import (
+	"errors"
 	"github.com/ogen-go/ogen"
 )
 
@@ -39,15 +40,16 @@ type (
 		float32 | float64
 	}
 	NumField[T integer | float] struct {
-		format fieldKind
-		rules  rList[float64]
 		fieldTrait
+		rules rList[float64]
+		err   error
 	}
 )
 
 func newNumField[T integer | float](mn, mx int64, err string) (f *NumField[T]) {
 	f = &NumField[T]{
 		rules: make(rList[float64]),
+		err:   errors.New(err),
 	}
 	if mn != 0 || mx != 0 {
 		f.rules.add(
@@ -69,7 +71,10 @@ func (f *NumField[T]) Max(val int64, err string) *NumField[T] {
 }
 
 func (f *NumField[T]) validate(v any, out any) (e error) {
-	val := v.(float64)
+	val, ok := v.(float64)
+	if !ok {
+		return f.err
+	}
 	if e = f.rules.apply(val); e != nil {
 		return
 	}

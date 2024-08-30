@@ -2,27 +2,12 @@ package zed
 
 import "math"
 
-const (
-	fieldString  fieldKind = "string"
-	fieldBool    fieldKind = "bool"
-	fieldUuid    fieldKind = "uuid"
-	fieldUint8   fieldKind = "uint8"
-	fieldUint16  fieldKind = "uint16"
-	fieldUint32  fieldKind = "uint32"
-	fieldInt8    fieldKind = "int8"
-	fieldInt16   fieldKind = "int16"
-	fieldInt32   fieldKind = "int32"
-	fieldInt64   fieldKind = "int64"
-	fieldFloat32 fieldKind = "float32"
-	fieldFloat64 fieldKind = "float64"
-)
+func Bool(err string, strict bool) *BoolField {
+	return newBoolField(err, strict)
+}
 
-type (
-	fieldKind string
-)
-
-func String() *StringField {
-	return newStrField()
+func String(err string) *StringField {
+	return newStrField(err)
 }
 
 func Uint8(err string) *NumField[uint8] {
@@ -63,4 +48,8 @@ func Float64(err string) *NumField[float64] {
 
 func Int(err string) *NumField[int] {
 	return newNumField[int](math.MinInt, math.MaxInt, err)
+}
+
+func UUID(err string) *UUIDField {
+	return newUuidField(err)
 }
