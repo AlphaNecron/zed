@@ -7,18 +7,18 @@ import (
 	"testing"
 )
 
-type EqualFunc[TVal, TOut any] func(a TVal, b TOut) bool
+type EqualFunc[TVal, TOut any] func(a TVal, b TOut) (actual, expected TOut, eq bool)
 
-func strEq(a, b string) bool {
-	return a == b
+func strEq(a, b string) (string, string, bool) {
+	return b, a, a == b
 }
 
-func uuidEq(a string, b uuid.UUID) bool {
-	return a == b.String()
+func uuidEq(a string, b uuid.UUID) (uuid.UUID, uuid.UUID, bool) {
+	return b, uuid.MustParse(a), a == b.String()
 }
 
-func boolEq(a, b bool) bool {
-	return a == b
+func boolEq(a, b bool) (bool, bool, bool) {
+	return b, a, a == b
 }
 
 func mapPtr[TKey comparable, TVal any](m map[TKey]TVal, k TKey) *TVal {
@@ -43,12 +43,13 @@ func testOne[TVal, TOut any](t *testing.T, z *zed.Zed, inp map[string]any, asser
 		out,
 	)
 	if assertErr {
-		assert.NotNil(t, e)
+		assert.Error(t, e)
 	} else {
-		assert.Nil(t, e)
+		assert.NoError(t, e)
 		if equalFn != nil {
 			for k, v := range inp {
-				assert.True(t, equalFn(v.(TVal), takeVal[TOut](out[k])), "mismatched inp and out")
+				_actual, expected, eq := equalFn(v.(TVal), takeVal[TOut](out[k]))
+				assert.Truef(t, eq, "mismatched inp and out, actual=%v, expected=%v", _actual, expected)
 			}
 		}
 	}

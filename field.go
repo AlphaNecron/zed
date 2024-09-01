@@ -2,8 +2,8 @@ package zed
 
 import "math"
 
-func Bool(err string, strict bool) *BoolField {
-	return newBoolField(err, strict)
+func Bool(err string) *BoolField {
+	return newBoolField(err)
 }
 
 func String(err string) *StringField {
@@ -52,4 +52,8 @@ func Int(err string) *NumField[int] {
 
 func UUID(err string) *UUIDField {
 	return newUuidField(err)
+}
+
+func DateTime(err string) *DateTimeField {
+	return newDateTimeField(err)
 }

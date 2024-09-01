@@ -6,18 +6,18 @@ import (
 )
 
 type ValidationError struct {
-	path string
-	err  error
+	Path string
+	Err  error
 }
 
 func (e ValidationError) Error() string {
-	return fmt.Sprintf("path=%s, error=%s", e.path, e.err)
+	return fmt.Sprintf("path=%s, error=%s", e.Path, e.Err)
 }
 
 func NewError(e error, path string) error {
 	return &ValidationError{
-		err:  e,
-		path: path,
+		Err:  e,
+		Path: path,
 	}
 }
 

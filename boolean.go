@@ -14,12 +14,16 @@ type BoolField struct {
 	err    error
 }
 
-func newBoolField(err string, strict bool) *BoolField {
+func newBoolField(err string) *BoolField {
 	return &BoolField{
-		err:    errors.New(err),
-		rules:  make(rList[string]),
-		strict: strict,
+		err:   errors.New(err),
+		rules: make(rList[string]),
 	}
+}
+
+func (f *BoolField) Strict() *BoolField {
+	f.strict = true
+	return f
 }
 
 func (f *BoolField) validate(v any, out any) (e error) {
