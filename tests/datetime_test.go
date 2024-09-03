@@ -24,7 +24,7 @@ func TestDateTime(t *testing.T) {
 		1,
 	}
 	z := zed.New().
-		Field("foo", zed.DateTime("expected rfc3399 datetime value").Layout(time.RFC3339))
+		Field("foo", zed.DateTime("expected rfc3339 datetime value").Layout(time.RFC3339))
 	testMulti[string, time.Time](t, z, "foo", actualTestData, false, func(a string, b time.Time) (time.Time, time.Time, bool) {
 		return b, testData[a], testData[a].Compare(b) == 0
 	})
