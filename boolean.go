@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-var _ fieldTrait = (*BoolField)(nil)
+var _ Field[bool] = (*BoolField)(nil)
 
 type BoolField struct {
-	fieldTrait
+	Field[bool]
 	rules  rList[string]
 	strict bool
 	err    error
@@ -26,27 +26,24 @@ func (f *BoolField) Strict() *BoolField {
 	return f
 }
 
-func (f *BoolField) validate(v any, out any) (e error) {
-	o, ok := out.(*bool)
-	if !ok {
-		return ErrUnexpectedOutType
-	}
+func (f *BoolField) Validate(v any) (out bool, e error) {
 	switch val := v.(type) {
 	case bool:
-		*o = val
+		out = val
 	case string:
 		if f.strict {
-			return f.err
+			e = f.err
+			return
 		}
 		if strings.EqualFold(val, "true") {
-			*o = true
+			out = true
 		} else if strings.EqualFold(val, "false") {
-			*o = false
+			out = false
 		} else {
 			e = f.err
 		}
 	default:
-		return f.err
+		e = f.err
 	}
 	return
 }

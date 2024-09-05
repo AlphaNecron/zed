@@ -17,8 +17,7 @@ func TestUUID(t *testing.T) {
 		0,
 		1,
 	}
-	z := zed.New().
-		Field("foo", zed.UUID("expected uuid value"))
-	testMulti[string, uuid.UUID](t, z, "foo", testData, false, uuidEq)
-	testMulti[any, uuid.UUID](t, z, "foo", antitheses, true, nil)
+	f := zed.UUID("expected uuid value")
+	testMulti[string, uuid.UUID](t, f, testData, false, uuidEq)
+	testMulti[any, uuid.UUID](t, f, antitheses, true, nil)
 }

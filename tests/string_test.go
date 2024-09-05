@@ -17,21 +17,28 @@ func TestString(t *testing.T) {
 		0,
 		1,
 	}
-	z := zed.New().
-		Field("foo", zed.String("expected string value"))
-	testMulti[string, string](t, z, "foo", testData, false, strEq)
-	testMulti[any, string](t, z, "foo", antitheses, true, nil)
+	f := zed.String("expected string value")
+	testMulti[string, string](t, f, testData, false, strEq)
+	testMulti[any, string](t, f, antitheses, true, nil)
 }
 
 func TestStringLen(t *testing.T) {
-	testOne[string, string](t, zed.New().
-		Field("foo", zed.String("expected string").MinLen(3, "minLen").MaxLen(3, "maxLen")).
-		Field("bar", zed.String("expected string").MinLen(4, "minLen2").MaxLen(4, "maxLen2")),
-		map[string]any{
-			"foo": "bar",
-			"bar": "quux",
-		},
-		false, strEq)
+	testData := []string{
+		"foo",
+		"bar",
+		"baz",
+		"quux",
+	}
+	antitheses := []string{
+		"0",
+		"01",
+		"01234",
+		"darcey",
+		"necron",
+	}
+	f := zed.String("expected string").MinLen(3, "minLen").MaxLen(4, "maxLen")
+	testMulti[string, string](t, f, testData, false, strEq)
+	testMulti[string, string](t, f, antitheses, true, nil)
 }
 
 func TestStringLen2(t *testing.T) {
@@ -46,10 +53,9 @@ func TestStringLen2(t *testing.T) {
 		"12",
 		"1234567",
 	}
-	z := zed.New().
-		Field("foo", zed.String("expected string").MinLen(3, "minLen").MaxLen(6, "maxLen"))
-	testMulti[string, string](t, z, "foo", testData, false, strEq)
-	testMulti[string, string](t, z, "foo", antitheses, true, nil)
+	f := zed.String("expected string").MinLen(3, "minLen").MaxLen(6, "maxLen")
+	testMulti[string, string](t, f, testData, false, strEq)
+	testMulti[string, string](t, f, antitheses, true, nil)
 }
 
 func TestStringPattern(t *testing.T) {
@@ -67,8 +73,7 @@ func TestStringPattern(t *testing.T) {
 		"0",
 		"f",
 	}
-	z := zed.New().
-		Field("foo", zed.String("expected string").Pattern("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", "regex"))
-	testMulti[string, string](t, z, "foo", testData, false, strEq)
-	testMulti[string, string](t, z, "foo", antitheses, true, nil)
+	f := zed.String("expected string").Pattern("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", "regex")
+	testMulti[string, string](t, f, testData, false, strEq)
+	testMulti[string, string](t, f, antitheses, true, nil)
 }

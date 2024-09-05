@@ -21,44 +21,21 @@ func boolEq(a, b bool) (bool, bool, bool) {
 	return b, a, a == b
 }
 
-func mapPtr[TKey comparable, TVal any](m map[TKey]TVal, k TKey) *TVal {
-	v, _ := m[k]
-	return &v
-}
-
-func takeVal[T any](x any) T {
-	return *(x.(*T))
-}
-
-func testOne[TVal, TOut any](t *testing.T, z *zed.Zed, inp map[string]any, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
-	out := make(map[string]any)
-	actual := make(map[string]TOut)
-	for k := range inp {
-		var _default TOut
-		actual[k] = _default
-		out[k] = mapPtr(actual, k)
-	}
-	e := z.Validate(
-		inp,
-		out,
-	)
+func testOne[TVal, TOut any](t *testing.T, f zed.Field[TOut], inp TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
+	out, e := f.Validate(inp)
 	if assertErr {
 		assert.Error(t, e)
 	} else {
 		assert.NoError(t, e)
 		if equalFn != nil {
-			for k, v := range inp {
-				_actual, expected, eq := equalFn(v.(TVal), takeVal[TOut](out[k]))
-				assert.Truef(t, eq, "mismatched inp and out, actual=%v, expected=%v", _actual, expected)
-			}
+			_actual, expected, eq := equalFn(inp, out)
+			assert.Truef(t, eq, "mismatched inp and out, actual=%v, expected=%v", _actual, expected)
 		}
 	}
 }
 
-func testMulti[TVal, TOut any](t *testing.T, z *zed.Zed, keyName string, data []TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
+func testMulti[TVal, TOut any](t *testing.T, f zed.Field[TOut], data []TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
 	for _, datum := range data {
-		m := make(map[string]any)
-		m[keyName] = datum
-		testOne[TVal, TOut](t, z, m, assertErr, equalFn)
+		testOne[TVal, TOut](t, f, datum, assertErr, equalFn)
 	}
 }

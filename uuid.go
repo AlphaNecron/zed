@@ -5,10 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
-var _ fieldTrait = (*UUIDField)(nil)
+var _ Field[uuid.UUID] = (*UUIDField)(nil)
 
 type UUIDField struct {
-	fieldTrait
+	Field[uuid.UUID]
 	rules rList[string]
 	err   error
 }
@@ -20,18 +20,15 @@ func newUuidField(err string) *UUIDField {
 	}
 }
 
-func (f *UUIDField) validate(v any, out any) (e error) {
-	o, outOk := out.(*uuid.UUID)
-	if !outOk {
-		return ErrUnexpectedOutType
-	}
+func (f *UUIDField) Validate(v any) (out uuid.UUID, e error) {
 	val, vOk := v.(string)
 	if !vOk {
-		return f.err
+		e = f.err
+		return
 	}
-	*o, e = uuid.Parse(val)
+	out, e = uuid.Parse(val)
 	if e != nil {
-		return f.err
+		e = f.err
 	}
 	return
 }

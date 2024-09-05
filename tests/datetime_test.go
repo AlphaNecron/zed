@@ -23,12 +23,11 @@ func TestDateTime(t *testing.T) {
 		0,
 		1,
 	}
-	z := zed.New().
-		Field("foo", zed.DateTime("expected rfc3339 datetime value").Layout(time.RFC3339))
-	testMulti[string, time.Time](t, z, "foo", actualTestData, false, func(a string, b time.Time) (time.Time, time.Time, bool) {
+	f := zed.DateTime("expected rfc3339 datetime value").Layout(time.RFC3339)
+	testMulti[string, time.Time](t, f, actualTestData, false, func(a string, b time.Time) (time.Time, time.Time, bool) {
 		return b, testData[a], testData[a].Compare(b) == 0
 	})
-	testMulti[any, time.Time](t, z, "foo", antitheses, true, nil)
+	testMulti[any, time.Time](t, f, antitheses, true, nil)
 }
 
 func TestDateTimeEpoch(t *testing.T) {
@@ -45,10 +44,9 @@ func TestDateTimeEpoch(t *testing.T) {
 		true,
 		false,
 	}
-	z := zed.New().
-		Field("foo", zed.DateTime("expected epoch datetime value").EpochUnit(zed.EpochMillisecond))
-	testMulti[float64, time.Time](t, z, "foo", actualTestData, false, func(a float64, b time.Time) (time.Time, time.Time, bool) {
+	f := zed.DateTime("expected epoch datetime value").EpochUnit(zed.EpochMillisecond)
+	testMulti[float64, time.Time](t, f, actualTestData, false, func(a float64, b time.Time) (time.Time, time.Time, bool) {
 		return b, testData[a], testData[a].Compare(b) == 0
 	})
-	testMulti[any, time.Time](t, z, "foo", antitheses, true, nil)
+	testMulti[any, time.Time](t, f, antitheses, true, nil)
 }

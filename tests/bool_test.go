@@ -23,12 +23,11 @@ func TestBool(t *testing.T) {
 		0,
 		1,
 	}
-	z := zed.New().
-		Field("foo", zed.Bool("expected bool value"))
-	testMulti[any, bool](t, z, "foo", actualTestData, false, func(a any, b bool) (bool, bool, bool) {
+	f := zed.Bool("expected bool value")
+	testMulti[any, bool](t, f, actualTestData, false, func(a any, b bool) (bool, bool, bool) {
 		return b, testData[a], testData[a] == b
 	})
-	testMulti[any, bool](t, z, "foo", antitheses, true, nil)
+	testMulti[any, bool](t, f, antitheses, true, nil)
 }
 
 func TestBoolStrict(t *testing.T) {
@@ -46,8 +45,7 @@ func TestBoolStrict(t *testing.T) {
 		"TRUE",
 		"FALSE",
 	}
-	z := zed.New().
-		Field("foo", zed.Bool("expected bool value").Strict())
-	testMulti[bool, bool](t, z, "foo", testData, false, boolEq)
-	testMulti[any, bool](t, z, "foo", antitheses, true, nil)
+	f := zed.Bool("expected bool value").Strict()
+	testMulti[bool, bool](t, f, testData, false, boolEq)
+	testMulti[any, bool](t, f, antitheses, true, nil)
 }

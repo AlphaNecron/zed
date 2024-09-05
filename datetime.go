@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var _ fieldTrait = (*DateTimeField)(nil)
+var _ Field[time.Time] = (*DateTimeField)(nil)
 
 const (
 	EpochNanosecond EpochUnit = 1 << iota
@@ -16,7 +16,7 @@ const (
 
 type (
 	DateTimeField struct {
-		fieldTrait
+		Field[time.Time]
 		rules     rList[string]
 		epochUnit EpochUnit
 		layout    string
@@ -43,27 +43,23 @@ func (f *DateTimeField) Layout(layout string) *DateTimeField {
 	return f
 }
 
-func (f *DateTimeField) validate(v any, out any) (e error) {
-	o, ok := out.(*time.Time)
-	if !ok {
-		return ErrUnexpectedOutType
-	}
+func (f *DateTimeField) Validate(v any) (out time.Time, e error) {
 	switch val := v.(type) {
 	case string:
-		*o, e = time.Parse(f.layout, val)
+		out, e = time.Parse(f.layout, val)
 	case float64:
 		switch f.epochUnit {
 		case EpochNanosecond:
-			*o = time.Unix(0, int64(val))
+			out = time.Unix(0, int64(val))
 			break
 		case EpochMicrosecond:
-			*o = time.UnixMicro(int64(val))
+			out = time.UnixMicro(int64(val))
 			break
 		case EpochMillisecond:
-			*o = time.UnixMilli(int64(val))
+			out = time.UnixMilli(int64(val))
 			break
 		case EpochSecond:
-			*o = time.Unix(int64(val), 0)
+			out = time.Unix(int64(val), 0)
 			break
 		default:
 			e = f.err

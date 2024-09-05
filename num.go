@@ -7,7 +7,7 @@ import (
 	"github.com/ogen-go/ogen"
 )
 
-var _ fieldTrait = (*NumField[float64])(nil)
+var _ Field[float64] = (*NumField[float64])(nil)
 
 var ruleMin = defineRule[float64, int64](
 	"min",
@@ -40,7 +40,7 @@ type (
 		float32 | float64
 	}
 	NumField[T integer | float] struct {
-		fieldTrait
+		Field[T]
 		rules rList[float64]
 		err   error
 	}
@@ -70,19 +70,32 @@ func (f *NumField[T]) Max(val int64, err string) *NumField[T] {
 	return f
 }
 
-func (f *NumField[T]) validate(v any, out any) (e error) {
-	val, ok := v.(float64)
-	if !ok {
-		return f.err
+func (f *NumField[T]) Validate(v any) (out T, e error) {
+	switch val := v.(type) {
+	case float32:
+	case float64:
+	case uint8:
+	case int8:
+	case uint16:
+	case int16:
+	case uint32:
+	case int32:
+	case uint64:
+	case int64:
+	case uint:
+	case int:
+		if e = f.rules.apply(float64(val)); e == nil {
+			out = T(val)
+		}
+		break
+	default:
+		e = f.err
+		break
 	}
-	if e = f.rules.apply(val); e != nil {
-		return
-	}
-	out = T(val)
 	return
 }
 
-func (f *NumField[T]) toSchema() (s *ogen.Schema) {
+func (f *NumField[T]) ToSchema() (s *ogen.Schema) {
 	s = ogen.NewSchema()
 	switch any(T(0)).(type) {
 	case int8:

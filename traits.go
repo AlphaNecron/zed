@@ -3,9 +3,9 @@ package zed
 import "github.com/ogen-go/ogen"
 
 type (
-	fieldTrait interface {
-		validate(val, out any) error
-		toSchema() *ogen.Schema
+	Field[TOut any] interface {
+		Validate(val any) (TOut, error)
+		ToSchema() *ogen.Schema
 	}
 	ruleTrait[T any] interface {
 		name() string
