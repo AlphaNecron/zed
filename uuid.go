@@ -18,13 +18,12 @@ func newUuidSchema(err string) *UUIDSchema {
 }
 
 func (s *UUIDSchema) Validate(v any, _ SchemaValidationFlag) (out uuid.UUID, e error) {
-	val, vOk := v.(string)
-	if !vOk {
-		e = s.err
-		return
-	}
-	out, e = uuid.Parse(val)
-	if e != nil {
+	switch val := v.(type) {
+	case string:
+		out, e = uuid.Parse(val)
+	case uuid.UUID:
+		out = val
+	default:
 		e = s.err
 	}
 	return

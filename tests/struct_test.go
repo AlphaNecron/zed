@@ -11,12 +11,23 @@ import (
 	"time"
 )
 
-type AuthReq struct {
-	Username        string `zed:"username,err:'username is required',pattern:'^[a-zA-Z0-9_]{3,20}$',pattern_err:'invalid username'"`
-	Password        string `zed:"password,err:'password is required',min_len:6,max_len:20,min_len_err:'password is too short',max_len_err:'password is too long'"`
-	Email           string `zed:"email,err:'email is required',pattern:'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',pattern_err:'invalid email'"`
-	RememberSession bool   `zed:"rememberSession,err:'invalid rememberSession'"`
-}
+type (
+	AuthReq struct {
+		Username        string `zed:"username,err:'invalid username',pattern:'^[a-zA-Z0-9_]{3,20}$',pattern_err:'invalid username',required"`
+		Password        string `zed:"password,err:'invalid password',min_len:6,max_len:20,min_len_err:'password is too short',max_len_err:'password is too long',required"`
+		Email           string `zed:"email,err:'invalid email',pattern:'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',pattern_err:'invalid email',required"`
+		RememberSession bool   `zed:"rememberSession,err:'invalid rememberSession'"`
+	}
+	NotSoComplexObject struct {
+		Username        string    `zed:"username,err:'invalid username',pattern:'^[a-zA-Z0-9_]{6,20}$',pattern_err:'invalid username',min_len:6,max_len:20,min_len_err:'username is too short',max_len_err:'username is too long',required"`
+		Password        string    `zed:"password,err:'invalid password',min_len:6,max_len:20,min_len_err:'password is too short',max_len_err:'password is too long',required"`
+		Email           string    `zed:"email,err:'invalid email',pattern:'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',pattern_err:'invalid email',required"`
+		RememberSession bool      `zed:"rememberSession,err:'invalid rememberSession'"`
+		Age             int       `zed:"age,err:'invalid age',min:0,exclusive_min,max:100,min_err:'invalid age',max_err:'invalid age'"`
+		Birthdate       time.Time `zed:"birthdate,err:'invalid birthdate',required"`
+		UUID            uuid.UUID `zed:"uuid,err:'invalid uuid',required"`
+	}
+)
 
 func TestStructConstructionShallow(t *testing.T) {
 	_, e := zed.StructForE[AuthReq]("expected struct")
@@ -99,9 +110,9 @@ func TestStructFromMap(t *testing.T) {
 
 func TestStructStripMap(t *testing.T) {
 	f := zed.Struct("expected map").
-		AddField("username", zed.String("username is required"), zed.FieldRequired).
-		AddField("password", zed.String("password is required"), zed.FieldRequired).
-		AddField("email", zed.String("email is required"), zed.FieldRequired)
+		AddField("username", zed.String("invalid username"), zed.FieldRequired).
+		AddField("password", zed.String("invalid password"), zed.FieldRequired).
+		AddField("email", zed.String("invalid email"), zed.FieldRequired)
 	testData := []any{
 		map[string]any{
 			"username": "foo",
@@ -125,6 +136,32 @@ func TestStructStripMap(t *testing.T) {
 		out, e := f.Validate(test, zed.AbortEarly)
 		assert.NoError(t, e)
 		assert.Equal(t, expected, out)
+	}
+}
+
+func BenchmarkStructCompile(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, e := zed.StructForE[NotSoComplexObject]("expected struct")
+		assert.NoError(b, e)
+	}
+}
+
+func BenchmarkStructValidation(b *testing.B) {
+	f, e := zed.StructForE[NotSoComplexObject]("expected struct")
+	assert.NoError(b, e)
+	now := time.Now()
+	mockUuid := uuid.New().String()
+	for i := 0; i < b.N; i++ {
+		_, e := f.Validate(map[string]any{
+			"username":        "foobar",
+			"password":        "bar123_",
+			"email":           "baz@foo.bar",
+			"age":             18,
+			"birthdate":       now,
+			"rememberSession": true,
+			"uuid":            mockUuid,
+		}, zed.AbortEarly)
+		assert.NoError(b, e)
 	}
 }
 

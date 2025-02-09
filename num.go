@@ -106,6 +106,10 @@ func (s *NumSchema[T]) Validate(v any, flags SchemaValidationFlag) (out T, e err
 	return
 }
 
+func (s *NumSchema[T]) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+	return s.Validate(v, flags)
+}
+
 func (s *NumSchema[T]) ToSchema() (os *ogen.Schema) {
 	os = ogen.NewSchema()
 	switch any(T(0)).(type) {

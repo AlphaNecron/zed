@@ -98,10 +98,12 @@ func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchem
 			schema, e = parseNumFieldOpts(Float32(errMsg), tag)
 		case reflect.Float64:
 			schema, e = parseNumFieldOpts(Float64(errMsg), tag)
-		case reflect.Struct:
+		case reflect.Array:
 			if isUuidType(f.Type) {
 				schema = UUID(errMsg)
-			} else if isTimeType(f.Type) {
+			}
+		case reflect.Struct:
+			if isTimeType(f.Type) {
 				schema, e = parseTimeFieldOpts(DateTime(errMsg), tag)
 			} else {
 				schema, e = newStructSchemaFromType[any](f.Type, errMsg)

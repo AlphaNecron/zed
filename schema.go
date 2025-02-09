@@ -8,7 +8,6 @@ import (
 type (
 	Schema[TOut any] interface {
 		Validate(val any, flags SchemaValidationFlag) (TOut, error)
-		schemaTrait
 	}
 	SchemaValidationFlag uint8
 )

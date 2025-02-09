@@ -57,6 +57,8 @@ func (s *DateTimeSchema) Validate(v any, _ SchemaValidationFlag) (out time.Time,
 		default:
 			e = s.err
 		}
+	case time.Time:
+		out = val
 	default:
 		e = s.err
 	}
