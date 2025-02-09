@@ -2,48 +2,55 @@ package zed
 
 import (
 	"errors"
-	"strings"
+	"github.com/ogen-go/ogen"
 )
 
-var _ Field[bool] = (*BoolField)(nil)
+var _ Schema[bool] = (*BoolSchema)(nil)
 
-type BoolField struct {
-	Field[bool]
-	rules  rList[string]
-	strict bool
-	err    error
+type BoolSchema struct {
+	rules rList[string]
+	// strict bool
+	err error
 }
 
-func newBoolField(err string) *BoolField {
-	return &BoolField{
-		err:   errors.New(err),
-		rules: make(rList[string]),
-	}
-}
+// func (f *BoolSchema) Strict() *BoolSchema {
+// 	f.strict = true
+// 	return f
+// }
 
-func (f *BoolField) Strict() *BoolField {
-	f.strict = true
-	return f
-}
-
-func (f *BoolField) Validate(v any) (out bool, e error) {
+func (f *BoolSchema) Validate(v any, _ bool) (out bool, e error) {
 	switch val := v.(type) {
 	case bool:
 		out = val
-	case string:
-		if f.strict {
-			e = f.err
-			return
-		}
-		if strings.EqualFold(val, "true") {
-			out = true
-		} else if strings.EqualFold(val, "false") {
-			out = false
-		} else {
-			e = f.err
-		}
+	// case string:
+	// 	if f.strict {
+	// 		e = f.Err
+	// 		return
+	// 	}
+	// 	if strings.EqualFold(val, "true") {
+	// 		out = true
+	// 	} else if strings.EqualFold(val, "false") {
+	// 		out = false
+	// 	} else {
+	// 		e = f.Err
+	// 	}
 	default:
 		e = f.err
 	}
 	return
+}
+
+func (f *BoolSchema) validateGeneric(v any, abortEarly bool) (any, error) {
+	return f.Validate(v, abortEarly)
+}
+
+func (f *BoolSchema) ToSchema() *ogen.Schema {
+	return ogen.Bool()
+}
+
+func newBoolSchema(err string) *BoolSchema {
+	return &BoolSchema{
+		err:   errors.New(err),
+		rules: make(rList[string]),
+	}
 }

@@ -3,8 +3,8 @@ package zed
 import "github.com/ogen-go/ogen"
 
 type (
-	Field[TOut any] interface {
-		Validate(val any) (TOut, error)
+	schemaTrait interface {
+		validateGeneric(v any, abortEarly bool) (any, error)
 		ToSchema() *ogen.Schema
 	}
 	ruleTrait[T any] interface {

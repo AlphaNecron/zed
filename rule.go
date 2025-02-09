@@ -3,6 +3,7 @@ package zed
 import (
 	"errors"
 	"github.com/ogen-go/ogen"
+	"go.uber.org/multierr"
 )
 
 var _ ruleTrait[any] = (*rule[any, any])(nil)
@@ -55,11 +56,15 @@ func (l rList[T]) add(rules ...ruleTrait[T]) {
 	}
 }
 
-func (l rList[T]) apply(v T) (e error) {
-	for _, a := range l {
-		if e = a.apply(v); e != nil {
-			return
+func (l rList[T]) apply(v T, abortEarly bool) error {
+	var me error
+	for _, r := range l {
+		if e := r.apply(v); e != nil {
+			if abortEarly {
+				return e
+			}
+			me = multierr.Append(me, e)
 		}
 	}
-	return
+	return me
 }

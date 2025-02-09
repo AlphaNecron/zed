@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-var _ Field[string] = (*StringField)(nil)
+var _ Schema[string] = (*StringSchema)(nil)
 
 var ruleMinLen = defineRule[string, uint64](
 	"minLen",
@@ -38,51 +38,50 @@ var rulePattern = defineRule[string, *regexp.Regexp](
 	},
 )
 
-type StringField struct {
-	Field[string]
+type StringSchema struct {
 	err   error
 	rules rList[string]
 }
 
-func newStrField(err string) *StringField {
-	return &StringField{
+func newStrSchema(err string) *StringSchema {
+	return &StringSchema{
 		rules: make(rList[string]),
 		err:   errors.New(err),
 	}
 }
 
-func (f *StringField) MinLen(l uint64, err string) *StringField {
+func (f *StringSchema) MinLen(l uint64, err string) *StringSchema {
 	f.rules.add(ruleMinLen(l, err))
 	return f
 }
 
-func (f *StringField) MaxLen(l uint64, err string) *StringField {
+func (f *StringSchema) MaxLen(l uint64, err string) *StringSchema {
 	f.rules.add(ruleMaxLen(l, err))
 	return f
 }
 
-func (f *StringField) Pattern(p string, err string) *StringField {
+func (f *StringSchema) Pattern(p string, err string) *StringSchema {
 	f.rules.add(rulePattern(regexp.MustCompile(p), err))
 	return f
 }
 
-func (f *StringField) Validate(v any) (out string, e error) {
+func (f *StringSchema) Validate(v any, abortEarly bool) (out string, e error) {
 	val, vOk := v.(string)
 	if !vOk {
 		e = f.err
 		return
 	}
-	for _, a := range f.rules {
-		if e = a.apply(val); e != nil {
-			return
-		}
-	}
+	e = f.rules.apply(val, abortEarly)
 	out = val
 	return
 }
 
-func (f *StringField) ToSchema() (s *ogen.Schema) {
-	s = ogen.NewSchema().SetType("string")
+func (f *StringSchema) validateGeneric(v any, abortEarly bool) (out any, e error) {
+	return f.Validate(v, abortEarly)
+}
+
+func (f *StringSchema) ToSchema() (s *ogen.Schema) {
+	s = ogen.String()
 	for _, r := range f.rules {
 		r.interceptSchema(s)
 	}

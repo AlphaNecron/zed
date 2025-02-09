@@ -21,8 +21,8 @@ func boolEq(a, b bool) (bool, bool, bool) {
 	return b, a, a == b
 }
 
-func testOne[TVal, TOut any](t *testing.T, f zed.Field[TOut], inp TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
-	out, e := f.Validate(inp)
+func testOne[TVal, TOut any](t *testing.T, f zed.Schema[TOut], inp TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
+	out, e := f.Validate(inp, false)
 	if assertErr {
 		assert.Error(t, e)
 	} else {
@@ -34,8 +34,8 @@ func testOne[TVal, TOut any](t *testing.T, f zed.Field[TOut], inp TVal, assertEr
 	}
 }
 
-func testMulti[TVal, TOut any](t *testing.T, f zed.Field[TOut], data []TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
-	for _, datum := range data {
-		testOne[TVal, TOut](t, f, datum, assertErr, equalFn)
+func testMulti[TVal, TOut any](t *testing.T, f zed.Schema[TOut], testData []TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
+	for _, test := range testData {
+		testOne[TVal, TOut](t, f, test, assertErr, equalFn)
 	}
 }

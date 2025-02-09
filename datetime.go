@@ -2,10 +2,11 @@ package zed
 
 import (
 	"errors"
+	"github.com/ogen-go/ogen"
 	"time"
 )
 
-var _ Field[time.Time] = (*DateTimeField)(nil)
+var _ Schema[time.Time] = (*DateTimeSchema)(nil)
 
 const (
 	EpochNanosecond EpochUnit = 1 << iota
@@ -15,8 +16,7 @@ const (
 )
 
 type (
-	DateTimeField struct {
-		Field[time.Time]
+	DateTimeSchema struct {
 		rules     rList[string]
 		epochUnit EpochUnit
 		layout    string
@@ -25,25 +25,25 @@ type (
 	EpochUnit uint8
 )
 
-func newDateTimeField(err string) *DateTimeField {
-	return &DateTimeField{
+func newDateTimeSchema(err string) *DateTimeSchema {
+	return &DateTimeSchema{
 		err:    errors.New(err),
 		rules:  make(rList[string]),
 		layout: time.RFC3339,
 	}
 }
 
-func (f *DateTimeField) EpochUnit(interval EpochUnit) *DateTimeField {
+func (f *DateTimeSchema) EpochUnit(interval EpochUnit) *DateTimeSchema {
 	f.epochUnit = interval
 	return f
 }
 
-func (f *DateTimeField) Layout(layout string) *DateTimeField {
+func (f *DateTimeSchema) Layout(layout string) *DateTimeSchema {
 	f.layout = layout
 	return f
 }
 
-func (f *DateTimeField) Validate(v any) (out time.Time, e error) {
+func (f *DateTimeSchema) Validate(v any, _ bool) (out time.Time, e error) {
 	switch val := v.(type) {
 	case string:
 		out, e = time.Parse(f.layout, val)
@@ -51,16 +51,12 @@ func (f *DateTimeField) Validate(v any) (out time.Time, e error) {
 		switch f.epochUnit {
 		case EpochNanosecond:
 			out = time.Unix(0, int64(val))
-			break
 		case EpochMicrosecond:
 			out = time.UnixMicro(int64(val))
-			break
 		case EpochMillisecond:
 			out = time.UnixMilli(int64(val))
-			break
 		case EpochSecond:
 			out = time.Unix(int64(val), 0)
-			break
 		default:
 			e = f.err
 		}
@@ -68,4 +64,12 @@ func (f *DateTimeField) Validate(v any) (out time.Time, e error) {
 		e = f.err
 	}
 	return
+}
+
+func (f *DateTimeSchema) validateGeneric(v any, abortEarly bool) (any, error) {
+	return f.Validate(v, abortEarly)
+}
+
+func (f *DateTimeSchema) ToSchema() *ogen.Schema {
+	return ogen.DateTime()
 }

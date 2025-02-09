@@ -10,16 +10,22 @@ type ValidationError struct {
 	Err  error
 }
 
-func (e ValidationError) Error() string {
-	return fmt.Sprintf("path=%s, error=%s", e.Path, e.Err)
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("`%s`: %v", e.Path, e.Err)
 }
 
-func NewError(e error, path string) error {
-	return &ValidationError{
-		Err:  e,
-		Path: path,
+func newValidationErr(err error, par string) error {
+	if err == nil {
+		return nil
 	}
+	var ve *ValidationError
+	if errors.As(err, &ve) {
+		ve.Path = par + "." + ve.Path
+	} else {
+		ve = &ValidationError{
+			Path: par,
+			Err:  err,
+		}
+	}
+	return ve
 }
-
-var ErrOutFieldMissing = errors.New("missing out field")
-var ErrUnexpectedOutType = errors.New("unexpected type for out")

@@ -7,31 +7,36 @@ import (
 	"github.com/ogen-go/ogen"
 )
 
-var _ Field[float64] = (*NumField[float64])(nil)
+type numLimit struct {
+	value     int64
+	exclusive bool
+}
 
-var ruleMin = defineRule[float64, int64](
+var _ Schema[float64] = (*NumSchema[float64])(nil)
+
+var ruleMin = defineRule[float64, numLimit](
 	"min",
-	func(f float64, lim int64) bool {
-		return f >= float64(lim)
+	func(f float64, lim numLimit) bool {
+		return f > float64(lim.value) || (!lim.exclusive && f == float64(lim.value))
 	},
-	func(a *rule[float64, int64], schema *ogen.Schema) {
-		schema.SetMinimum(&a.value)
+	func(a *rule[float64, numLimit], schema *ogen.Schema) {
+		schema.SetMinimum(&a.value.value).SetExclusiveMinimum(a.value.exclusive)
 	},
 )
 
-var ruleMax = defineRule[float64, int64](
+var ruleMax = defineRule[float64, numLimit](
 	"max",
-	func(f float64, lim int64) bool {
-		return f <= float64(lim)
+	func(f float64, lim numLimit) bool {
+		return f < float64(lim.value) || (lim.exclusive && f == float64(lim.value))
 	},
-	func(a *rule[float64, int64], schema *ogen.Schema) {
-		schema.SetMaximum(&a.value)
+	func(a *rule[float64, numLimit], schema *ogen.Schema) {
+		schema.SetMaximum(&a.value.value).SetExclusiveMaximum(a.value.exclusive)
 	},
 )
 
 type (
 	unsigned interface {
-		uint8 | uint16 | uint32
+		uint | uint8 | uint16 | uint32
 	}
 	integer interface {
 		unsigned | int | int8 | int16 | int32 | int64
@@ -39,38 +44,49 @@ type (
 	float interface {
 		float32 | float64
 	}
-	NumField[T integer | float] struct {
-		Field[T]
+	NumSchema[T integer | float] struct {
 		rules rList[float64]
 		err   error
 	}
 )
 
-func newNumField[T integer | float](mn, mx int64, err string) (f *NumField[T]) {
-	f = &NumField[T]{
+func newNumSchema[T integer | float](mn, mx int64, err string) (f *NumSchema[T]) {
+	f = &NumSchema[T]{
 		rules: make(rList[float64]),
 		err:   errors.New(err),
 	}
 	if mn != 0 || mx != 0 {
 		f.rules.add(
-			ruleMin(mn, err),
-			ruleMax(mx, err),
+			ruleMin(numLimit{
+				value:     mn,
+				exclusive: false,
+			}, err),
+			ruleMax(numLimit{
+				value:     mx,
+				exclusive: false,
+			}, err),
 		)
 	}
 	return
 }
 
-func (f *NumField[T]) Min(val int64, err string) *NumField[T] {
-	f.rules.add(ruleMin(val, err))
+func (f *NumSchema[T]) Min(val int64, exclusive bool, err string) *NumSchema[T] {
+	f.rules.add(ruleMin(numLimit{
+		value:     val,
+		exclusive: exclusive,
+	}, err))
 	return f
 }
 
-func (f *NumField[T]) Max(val int64, err string) *NumField[T] {
-	f.rules.add(ruleMax(val, err))
+func (f *NumSchema[T]) Max(val int64, exclusive bool, err string) *NumSchema[T] {
+	f.rules.add(ruleMax(numLimit{
+		value:     val,
+		exclusive: exclusive,
+	}, err))
 	return f
 }
 
-func (f *NumField[T]) Validate(v any) (out T, e error) {
+func (f *NumSchema[T]) Validate(v any, abortEarly bool) (out T, e error) {
 	switch val := v.(type) {
 	case float32:
 	case float64:
@@ -84,18 +100,20 @@ func (f *NumField[T]) Validate(v any) (out T, e error) {
 	case int64:
 	case uint:
 	case int:
-		if e = f.rules.apply(float64(val)); e == nil {
+		if e = f.rules.apply(float64(val), abortEarly); e == nil {
 			out = T(val)
 		}
-		break
 	default:
 		e = f.err
-		break
 	}
 	return
 }
 
-func (f *NumField[T]) ToSchema() (s *ogen.Schema) {
+func (f *NumSchema[T]) validateGeneric(v any, abortEarly bool) (out any, e error) {
+	return f.Validate(v, abortEarly)
+}
+
+func (f *NumSchema[T]) ToSchema() (s *ogen.Schema) {
 	s = ogen.NewSchema()
 	switch any(T(0)).(type) {
 	case int8:
