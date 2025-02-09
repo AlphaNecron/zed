@@ -1,7 +1,6 @@
 package zed
 
 import (
-	"errors"
 	"github.com/ogen-go/ogen"
 	"time"
 )
@@ -17,38 +16,36 @@ const (
 
 type (
 	DateTimeSchema struct {
-		rules     rList[string]
+		*baseSchema[string, time.Time]
 		epochUnit EpochUnit
 		layout    string
-		err       error
 	}
 	EpochUnit uint8
 )
 
 func newDateTimeSchema(err string) *DateTimeSchema {
 	return &DateTimeSchema{
-		err:    errors.New(err),
-		rules:  make(rList[string]),
-		layout: time.RFC3339,
+		baseSchema: newBaseSchema[string, time.Time](err),
+		layout:     time.RFC3339,
 	}
 }
 
-func (f *DateTimeSchema) EpochUnit(interval EpochUnit) *DateTimeSchema {
-	f.epochUnit = interval
-	return f
+func (s *DateTimeSchema) EpochUnit(interval EpochUnit) *DateTimeSchema {
+	s.epochUnit = interval
+	return s
 }
 
-func (f *DateTimeSchema) Layout(layout string) *DateTimeSchema {
-	f.layout = layout
-	return f
+func (s *DateTimeSchema) Layout(layout string) *DateTimeSchema {
+	s.layout = layout
+	return s
 }
 
-func (f *DateTimeSchema) Validate(v any, _ bool) (out time.Time, e error) {
+func (s *DateTimeSchema) Validate(v any, _ SchemaValidationFlag) (out time.Time, e error) {
 	switch val := v.(type) {
 	case string:
-		out, e = time.Parse(f.layout, val)
+		out, e = time.Parse(s.layout, val)
 	case float64:
-		switch f.epochUnit {
+		switch s.epochUnit {
 		case EpochNanosecond:
 			out = time.Unix(0, int64(val))
 		case EpochMicrosecond:
@@ -58,18 +55,18 @@ func (f *DateTimeSchema) Validate(v any, _ bool) (out time.Time, e error) {
 		case EpochSecond:
 			out = time.Unix(int64(val), 0)
 		default:
-			e = f.err
+			e = s.err
 		}
 	default:
-		e = f.err
+		e = s.err
 	}
 	return
 }
 
-func (f *DateTimeSchema) validateGeneric(v any, abortEarly bool) (any, error) {
-	return f.Validate(v, abortEarly)
+func (s *DateTimeSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+	return s.Validate(v, flags)
 }
 
-func (f *DateTimeSchema) ToSchema() *ogen.Schema {
+func (s *DateTimeSchema) ToSchema() *ogen.Schema {
 	return ogen.DateTime()
 }

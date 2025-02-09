@@ -16,7 +16,7 @@ type (
 		validate         func(TSrc, TVal) bool
 		_interceptSchema func(*rule[TSrc, TVal], *ogen.Schema)
 	}
-	rList[T any] map[string]ruleTrait[T]
+	ruleset[T any] map[string]ruleTrait[T]
 )
 
 func defineRule[TSrc, TVal any](
@@ -50,13 +50,13 @@ func (a *rule[TSrc, TVal]) interceptSchema(schema *ogen.Schema) {
 	a._interceptSchema(a, schema)
 }
 
-func (l rList[T]) add(rules ...ruleTrait[T]) {
+func (l ruleset[T]) add(rules ...ruleTrait[T]) {
 	for _, r := range rules {
 		l[r.name()] = r
 	}
 }
 
-func (l rList[T]) apply(v T, abortEarly bool) error {
+func (l ruleset[T]) apply(v T, abortEarly bool) error {
 	var me error
 	for _, r := range l {
 		if e := r.apply(v); e != nil {

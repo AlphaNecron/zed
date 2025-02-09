@@ -1,7 +1,6 @@
 package zed
 
 import (
-	"errors"
 	"github.com/ogen-go/ogen"
 	"regexp"
 )
@@ -39,51 +38,49 @@ var rulePattern = defineRule[string, *regexp.Regexp](
 )
 
 type StringSchema struct {
-	err   error
-	rules rList[string]
+	*baseSchema[string, string]
 }
 
 func newStrSchema(err string) *StringSchema {
 	return &StringSchema{
-		rules: make(rList[string]),
-		err:   errors.New(err),
+		baseSchema: newBaseSchema[string, string](err),
 	}
 }
 
-func (f *StringSchema) MinLen(l uint64, err string) *StringSchema {
-	f.rules.add(ruleMinLen(l, err))
-	return f
+func (s *StringSchema) MinLen(l uint64, err string) *StringSchema {
+	s.rules.add(ruleMinLen(l, err))
+	return s
 }
 
-func (f *StringSchema) MaxLen(l uint64, err string) *StringSchema {
-	f.rules.add(ruleMaxLen(l, err))
-	return f
+func (s *StringSchema) MaxLen(l uint64, err string) *StringSchema {
+	s.rules.add(ruleMaxLen(l, err))
+	return s
 }
 
-func (f *StringSchema) Pattern(p string, err string) *StringSchema {
-	f.rules.add(rulePattern(regexp.MustCompile(p), err))
-	return f
+func (s *StringSchema) Pattern(p string, err string) *StringSchema {
+	s.rules.add(rulePattern(regexp.MustCompile(p), err))
+	return s
 }
 
-func (f *StringSchema) Validate(v any, abortEarly bool) (out string, e error) {
+func (s *StringSchema) Validate(v any, flags SchemaValidationFlag) (out string, e error) {
 	val, vOk := v.(string)
 	if !vOk {
-		e = f.err
+		e = s.err
 		return
 	}
-	e = f.rules.apply(val, abortEarly)
+	e = s.rules.apply(val, flags.Has(AbortEarly))
 	out = val
 	return
 }
 
-func (f *StringSchema) validateGeneric(v any, abortEarly bool) (out any, e error) {
-	return f.Validate(v, abortEarly)
+func (s *StringSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+	return s.Validate(v, flags)
 }
 
-func (f *StringSchema) ToSchema() (s *ogen.Schema) {
-	s = ogen.String()
-	for _, r := range f.rules {
-		r.interceptSchema(s)
+func (s *StringSchema) ToSchema() (os *ogen.Schema) {
+	os = ogen.String()
+	for _, r := range s.rules {
+		r.interceptSchema(os)
 	}
 	return
 }

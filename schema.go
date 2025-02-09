@@ -5,9 +5,20 @@ import (
 	"reflect"
 )
 
-type Schema[TOut any] interface {
-	Validate(val any, abortEarly bool) (TOut, error)
-	schemaTrait
+type (
+	Schema[TOut any] interface {
+		Validate(val any, flags SchemaValidationFlag) (TOut, error)
+		schemaTrait
+	}
+	SchemaValidationFlag uint8
+)
+
+const (
+	AbortEarly SchemaValidationFlag = 1 << iota
+)
+
+func (f SchemaValidationFlag) Has(_f SchemaValidationFlag) bool {
+	return f&_f != 0
 }
 
 func Bool(err string) *BoolSchema {
@@ -78,6 +89,6 @@ func StructForE[T any](err string) (*StructSchema[T], error) {
 	return newStructSchemaFromType[T](reflect.TypeFor[T](), err)
 }
 
-func Struct(err string) *StructSchema[any] {
-	return newStructSchema(err)
+func Struct(err string) *StructSchema[map[string]any] {
+	return newStructSchema[map[string]any](err)
 }

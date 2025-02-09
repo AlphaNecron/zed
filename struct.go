@@ -7,7 +7,6 @@ import (
 	"github.com/vmihailenco/tagparser/v2"
 	"go.uber.org/multierr"
 	"reflect"
-	"strings"
 )
 
 var (
@@ -17,7 +16,7 @@ var (
 
 type (
 	StructSchema[T any] struct {
-		err    error
+		*baseSchema[T, T]
 		fields map[string]*structField
 	}
 	StructCompileError struct {
@@ -25,23 +24,35 @@ type (
 		Err  error
 	}
 	structField struct {
-		schema   schemaTrait
-		required bool
+		schema schemaTrait
+		flags  StructFieldFlag
 	}
+	StructFieldFlag uint8
 )
 
-func newStructSchema(err string) *StructSchema[any] {
-	return &StructSchema[any]{
-		fields: make(map[string]*structField),
-		err:    errors.New(err),
+const (
+	FieldRequired StructFieldFlag = 1 << iota
+)
+
+func (f StructFieldFlag) Has(_f StructFieldFlag) bool {
+	return f&_f != 0
+}
+
+func newStructSchema[T any](err string) *StructSchema[T] {
+	return &StructSchema[T]{
+		fields:     make(map[string]*structField),
+		baseSchema: newBaseSchema[T, T](err),
 	}
 }
 
 func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchema[T], e error) {
-	sf = &StructSchema[T]{
-		fields: make(map[string]*structField),
-		err:    errors.New(err),
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
+	if t.Kind() != reflect.Struct && t.Kind() != reflect.Map {
+		e = errors.New("expected out to be `map` or `struct`")
+	}
+	sf = newStructSchema[T](err)
 	for i := range t.NumField() {
 		f := t.Field(i)
 		tag := tagparser.Parse(f.Tag.Get("zed"))
@@ -98,9 +109,13 @@ func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchem
 		default:
 			continue
 		}
+		var flags StructFieldFlag = 0
+		if tag.HasOption("required") {
+			flags |= FieldRequired
+		}
 		sf.fields[actualName] = &structField{
-			schema:   schema,
-			required: tag.HasOption("required"),
+			schema: schema,
+			flags:  flags,
 		}
 		if e != nil {
 			e = newCompileErr(e, actualName)
@@ -110,74 +125,104 @@ func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchem
 	return
 }
 
-func (f *StructSchema[T]) AddField(name string, schema schemaTrait, required bool) {
-	f.fields[name] = &structField{
-		schema:   schema,
-		required: required,
+func (s *StructSchema[T]) AddField(name string, schema schemaTrait, flags StructFieldFlag) *StructSchema[T] {
+	s.fields[name] = &structField{
+		schema: schema,
+		flags:  flags,
 	}
+	return s
 }
 
-func (f *StructSchema[T]) Validate(m any, abortEarly bool) (out T, e error) {
-	refType := reflect.TypeOf(m)
+func (s *StructSchema[T]) Validate(m any, flags SchemaValidationFlag) (out T, e error) {
+	var refOut reflect.Value
 	refVal := reflect.ValueOf(m)
+	refType := refVal.Type()
+	outType := reflect.TypeFor[T]()
 	if refType.Kind() == reflect.Ptr {
 		refType = refType.Elem()
 		refVal = refVal.Elem()
 	}
-	if refType.Kind() != reflect.Struct {
-		e = f.err
-		return
+	if outType.Kind() == reflect.Ptr {
+		outType = outType.Elem()
+	}
+	if outType.Kind() == reflect.Struct {
+		refOut = reflect.New(outType).Elem()
+	} else if outType.Kind() == reflect.Map {
+		refOut = reflect.MakeMap(outType)
 	}
 	mp := make(map[string]reflect.Value)
-	for i := range refType.NumField() {
-		_f := refType.Field(i)
-		name := _f.Name
-		t := _f.Tag.Get("zed")
-		tagName := t[:strings.Index(t, ",")]
-		if tagName == "-" {
-			continue
+	if refType.Kind() == reflect.Map {
+		if refType.Key().Kind() != reflect.String {
+			e = s.err
+			return
 		}
-		if tagName != "" {
-			name = tagName
+		for _, k := range refVal.MapKeys() {
+			mp[k.String()] = refVal.MapIndex(k)
 		}
-		mp[name] = refVal.Field(i)
+	} else if refType.Kind() == reflect.Struct {
+		for i := range refType.NumField() {
+			if name, ok := parseStructFieldName(refType.Field(i)); ok {
+				mp[name] = refVal.Field(i)
+			}
+		}
+	} else {
+		e = s.err
+		return
 	}
-	for name, field := range f.fields {
+	structNameMp := make(map[string]string)
+	if outType.Kind() == reflect.Struct {
+		for i := range outType.NumField() {
+			f := outType.Field(i)
+			if name, ok := parseStructFieldName(f); ok {
+				structNameMp[name] = f.Name
+			}
+		}
+	}
+	for name, field := range s.fields {
 		refField, found := mp[name]
-		if !found && !field.required {
+		if !found && !field.flags.Has(FieldRequired) {
 			continue
 		}
 		var val any = nil
 		if found {
 			val = refField.Interface()
 		}
-		_, _e := field.schema.validateGeneric(val, abortEarly)
+		_out, _e := field.schema.validateGeneric(val, flags)
 		if _e != nil {
-			if abortEarly {
+			if flags.Has(AbortEarly) {
 				e = newValidationErr(_e, name)
 				return
 			}
 			e = multierr.Append(e, newValidationErr(_e, name))
+			continue
 		}
-		// refField.Set(reflect.ValueOf(_out))
+		if outType.Kind() == reflect.Map {
+			refOut.SetMapIndex(reflect.ValueOf(name), reflect.ValueOf(_out))
+		} else if sname, ok := structNameMp[name]; ok {
+			f := refOut.FieldByName(sname)
+			if f.CanSet() {
+				f.Set(reflect.ValueOf(_out))
+			}
+		}
 	}
+	out = refOut.Interface().(T)
 	return
 }
 
-func (f *StructSchema[T]) validateGeneric(v any, abortEarly bool) (any, error) {
-	return f.Validate(v, abortEarly)
+func (s *StructSchema[T]) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+	return s.Validate(v, flags)
 }
 
-func (f *StructSchema[T]) ToSchema() (s *ogen.Schema) {
-	s = ogen.NewSchema().SetType("object")
-	for name, field := range f.fields {
+func (s *StructSchema[T]) ToSchema() (os *ogen.Schema) {
+	os = ogen.NewSchema().SetType("object")
+	for name, field := range s.fields {
 		prop := ogen.NewProperty().
 			SetName(name).
 			SetSchema(field.schema.ToSchema())
-		if field.required {
-			s.AddRequiredProperties(prop)
+		if field.flags.Has(FieldRequired) {
+			os.AddRequiredProperties(prop)
 		} else {
-			s.AddOptionalProperties(prop)
+			os.AddOptionalProperties(prop)
 		}
 	}
 	return

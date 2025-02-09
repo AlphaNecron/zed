@@ -5,11 +5,32 @@ import (
 	"github.com/vmihailenco/tagparser/v2"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type pair[TF, TS any] struct {
 	first  TF
 	second TS
+}
+
+func makePair[TF, TS any](first TF, second TS) pair[TF, TS] {
+	return pair[TF, TS]{
+		first:  first,
+		second: second,
+	}
+}
+
+func parseStructFieldName(f reflect.StructField) (string, bool) {
+	name := f.Name
+	t := f.Tag.Get("zed")
+	tagName := t[:strings.Index(t, ",")]
+	if tagName == "-" {
+		return "", false
+	}
+	if tagName != "" {
+		name = tagName
+	}
+	return name, true
 }
 
 func isUuidType(t reflect.Type) bool {

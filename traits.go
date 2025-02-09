@@ -4,7 +4,7 @@ import "github.com/ogen-go/ogen"
 
 type (
 	schemaTrait interface {
-		validateGeneric(v any, abortEarly bool) (any, error)
+		validateGeneric(v any, flags SchemaValidationFlag) (any, error)
 		ToSchema() *ogen.Schema
 	}
 	ruleTrait[T any] interface {

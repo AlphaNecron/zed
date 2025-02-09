@@ -22,7 +22,7 @@ func boolEq(a, b bool) (bool, bool, bool) {
 }
 
 func testOne[TVal, TOut any](t *testing.T, f zed.Schema[TOut], inp TVal, assertErr bool, equalFn EqualFunc[TVal, TOut]) {
-	out, e := f.Validate(inp, false)
+	out, e := f.Validate(inp, 0)
 	if assertErr {
 		assert.Error(t, e)
 	} else {

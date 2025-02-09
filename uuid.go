@@ -1,7 +1,6 @@
 package zed
 
 import (
-	"errors"
 	"github.com/google/uuid"
 	"github.com/ogen-go/ogen"
 )
@@ -9,34 +8,32 @@ import (
 var _ Schema[uuid.UUID] = (*UUIDSchema)(nil)
 
 type UUIDSchema struct {
-	rules rList[string]
-	err   error
+	*baseSchema[any, uuid.UUID]
 }
 
 func newUuidSchema(err string) *UUIDSchema {
 	return &UUIDSchema{
-		err:   errors.New(err),
-		rules: make(rList[string]),
+		baseSchema: newBaseSchema[any, uuid.UUID](err),
 	}
 }
 
-func (f *UUIDSchema) Validate(v any, _ bool) (out uuid.UUID, e error) {
+func (s *UUIDSchema) Validate(v any, _ SchemaValidationFlag) (out uuid.UUID, e error) {
 	val, vOk := v.(string)
 	if !vOk {
-		e = f.err
+		e = s.err
 		return
 	}
 	out, e = uuid.Parse(val)
 	if e != nil {
-		e = f.err
+		e = s.err
 	}
 	return
 }
 
-func (f *UUIDSchema) validateGeneric(v any, abortEarly bool) (out any, e error) {
-	return f.Validate(v, abortEarly)
+func (s *UUIDSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+	return s.Validate(v, flags)
 }
 
-func (f *UUIDSchema) ToSchema() *ogen.Schema {
+func (s *UUIDSchema) ToSchema() *ogen.Schema {
 	return ogen.UUID()
 }
