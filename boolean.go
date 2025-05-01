@@ -37,7 +37,7 @@ func (s *BoolSchema) Validate(v any, _ SchemaValidationFlag) (out bool, e error)
 	return
 }
 
-func (s *BoolSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *BoolSchema) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 

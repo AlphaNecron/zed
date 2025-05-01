@@ -106,7 +106,7 @@ func (s *NumSchema[T]) Validate(v any, flags SchemaValidationFlag) (out T, e err
 	return
 }
 
-func (s *NumSchema[T]) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *NumSchema[T]) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 

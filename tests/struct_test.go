@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/multierr"
-	"necron.dev/zed"
+	"necron.dev/pkg/zed"
 	"slices"
 	"testing"
 	"time"

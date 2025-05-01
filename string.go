@@ -73,7 +73,7 @@ func (s *StringSchema) Validate(v any, flags SchemaValidationFlag) (out string, 
 	return
 }
 
-func (s *StringSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *StringSchema) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 

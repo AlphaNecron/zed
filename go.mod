@@ -1,4 +1,4 @@
-module necron.dev/zed
+module necron.dev/pkg/zed
 
 go 1.22.0
 

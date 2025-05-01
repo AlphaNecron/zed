@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"necron.dev/zed"
+	"necron.dev/pkg/zed"
 	"testing"
 )
 

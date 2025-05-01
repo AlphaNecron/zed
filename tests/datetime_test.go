@@ -3,7 +3,7 @@ package tests
 import (
 	"github.com/stretchr/testify/assert"
 	"maps"
-	"necron.dev/zed"
+	"necron.dev/pkg/zed"
 	"slices"
 	"testing"
 	"time"

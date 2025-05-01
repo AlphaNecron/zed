@@ -65,7 +65,7 @@ func (s *DateTimeSchema) Validate(v any, _ SchemaValidationFlag) (out time.Time,
 	return
 }
 
-func (s *DateTimeSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *DateTimeSchema) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 

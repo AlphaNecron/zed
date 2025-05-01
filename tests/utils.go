@@ -3,7 +3,7 @@ package tests
 import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"necron.dev/zed"
+	"necron.dev/pkg/zed"
 	"testing"
 )
 

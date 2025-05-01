@@ -24,7 +24,7 @@ type (
 		Err  error
 	}
 	structField struct {
-		schema schemaTrait
+		schema SchemaTrait
 		flags  StructFieldFlag
 	}
 	StructFieldFlag uint8
@@ -56,7 +56,7 @@ func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchem
 	for i := range t.NumField() {
 		f := t.Field(i)
 		tag := tagparser.Parse(f.Tag.Get("zed"))
-		var schema schemaTrait = nil
+		var schema SchemaTrait = nil
 		actualName := f.Name
 		if tag.Name == "-" {
 			continue
@@ -127,7 +127,7 @@ func newStructSchemaFromType[T any](t reflect.Type, err string) (sf *StructSchem
 	return
 }
 
-func (s *StructSchema[T]) AddField(name string, schema schemaTrait, flags StructFieldFlag) *StructSchema[T] {
+func (s *StructSchema[T]) AddField(name string, schema SchemaTrait, flags StructFieldFlag) *StructSchema[T] {
 	s.fields[name] = &structField{
 		schema: schema,
 		flags:  flags,
@@ -189,7 +189,7 @@ func (s *StructSchema[T]) Validate(m any, flags SchemaValidationFlag) (out T, e 
 		if found {
 			val = refField.Interface()
 		}
-		_out, _e := field.schema.validateGeneric(val, flags)
+		_out, _e := field.schema.ValidateGeneric(val, flags)
 		if _e != nil {
 			if flags.Has(AbortEarly) {
 				e = newValidationErr(_e, name)
@@ -211,7 +211,7 @@ func (s *StructSchema[T]) Validate(m any, flags SchemaValidationFlag) (out T, e 
 	return
 }
 
-func (s *StructSchema[T]) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *StructSchema[T]) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 

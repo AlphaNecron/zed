@@ -3,8 +3,8 @@ package zed
 import "github.com/ogen-go/ogen"
 
 type (
-	schemaTrait interface {
-		validateGeneric(v any, flags SchemaValidationFlag) (any, error)
+	SchemaTrait interface {
+		ValidateGeneric(v any, flags SchemaValidationFlag) (any, error)
 		ToSchema() *ogen.Schema
 	}
 	ruleTrait[T any] interface {

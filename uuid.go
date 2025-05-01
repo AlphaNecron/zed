@@ -29,7 +29,7 @@ func (s *UUIDSchema) Validate(v any, _ SchemaValidationFlag) (out uuid.UUID, e e
 	return
 }
 
-func (s *UUIDSchema) validateGeneric(v any, flags SchemaValidationFlag) (any, error) {
+func (s *UUIDSchema) ValidateGeneric(v any, flags SchemaValidationFlag) (any, error) {
 	return s.Validate(v, flags)
 }
 
